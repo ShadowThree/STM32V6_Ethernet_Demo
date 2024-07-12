@@ -1,0 +1,3 @@
+*.uvguix.*
+MDK-ARM/STM32V6_Ethernet_Demo/*
+JLinkLog.txt
