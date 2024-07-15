@@ -1,3 +1,9 @@
+## UDP server
+1. 服务器一般都是固定`IP`地址的，所以本例程在`cubeMx`中配置了静态`IP`；
+2. 在`udpServer_init()`中，初始化了`UDP`服务器的`IP`以及端口(`7`)；
+3. 只需要通过[`TCPUDPDbg.exe`](./TCPUDPDbg.7z)工具创建一个`UDP`客户端，并通过`IP`和端口连接到本例程服务器，就可以实现数据的收发了：
+![UDP Server Test](./image/UDP_Server_test.png)
+
 ## 注意
 1. 在下面的`工程创建过程-第3步`中，选择了`LAN8742`作为`PHY`芯片驱动代码模板，熟悉后完全可以不选，直接在生成的代码中编辑`ethernetif.c`文件即可(也不需要复制重命名了)；
 2. 在`cubeMx`的`LWIP`配置里面开启`Debug`后好像并没有日志输出，需要手动在工程代码的`lwipopts.h`中加上如下代码（按需使能）：
