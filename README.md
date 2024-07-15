@@ -1,3 +1,16 @@
+## 注意
+1. 在下面的`工程创建过程-第3步`中，选择了`LAN8742`作为`PHY`芯片驱动代码模板，熟悉后完全可以不选，直接在生成的代码中编辑`ethernetif.c`文件即可(也不需要复制重命名了)；
+2. 在`cubeMx`的`LWIP`配置里面开启`Debug`后好像并没有日志输出，需要手动在工程代码的`lwipopts.h`中加上如下代码（按需使能）：
+```c
+  #define LWIP_DEBUG 1
+  #define NETIF_DEBUG LWIP_DBG_ON
+  #define DHCP_DEBUG LWIP_DBG_ON
+  #define UDP_DEBUG  LWIP_DBG_ON
+  //#define MEMP_DEBUG LWIP_DBG_ON
+  //#define MEM_DEBUG LWIP_DBG_ON
+  #define ICMP_DEBUG LWIP_DBG_ON
+```
+
 ## 说明
 1. 本工程基于安富莱`STM32V6`开发板，通过`cubeMx`进行工程配置；
 2. 工程使用`DHCP`协议动态从路由器获取`IP`地址，所以开发板的`IP`地址需要从路由器后台获取;

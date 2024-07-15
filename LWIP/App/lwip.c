@@ -83,13 +83,7 @@ void MX_LWIP_Init(void)
   dhcp_start(&gnetif);
 
 /* USER CODE BEGIN 3 */
-	#if !LWIP_DHCP
-		LOG_DBG(" IP : %s\n", ip4addr_ntoa(netif_ip4_addr(&gnetif)));
-		LOG_DBG("Mask: %s\n", ip4addr_ntoa(netif_ip4_netmask(&gnetif)));
-		LOG_DBG(" GW : %s\n", ip4addr_ntoa(netif_ip4_gw(&gnetif)));
-	#else
-		LOG_DBG("DHCP enabled, check the IP in route\n");
-	#endif
+
 /* USER CODE END 3 */
 }
 

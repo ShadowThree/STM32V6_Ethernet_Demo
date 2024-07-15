@@ -1,4 +1,3 @@
-
 #ifndef __PHY_DM916X_H
 #define __PHY_DM916X_H
 
@@ -103,11 +102,11 @@
 #define  DM916x_STATUS_ERROR                 ((int32_t)-1)
 #define  DM916x_STATUS_OK                    ((int32_t) 0)
 #define  DM916x_STATUS_LINK_DOWN             ((int32_t) 1)
-#define  DM916x_STATUS_100MBITS_FULLDUPLEX   ((int32_t) 2)
-#define  DM916x_STATUS_100MBITS_HALFDUPLEX   ((int32_t) 3)
-#define  DM916x_STATUS_10MBITS_FULLDUPLEX    ((int32_t) 4)
-#define  DM916x_STATUS_10MBITS_HALFDUPLEX    ((int32_t) 5)
-#define  DM916x_STATUS_AUTONEGO_NOTDONE      ((int32_t) 6)
+#define  DM916x_STATUS_AUTONEGO_NOTDONE      ((int32_t) 2)
+#define  DM916x_STATUS_100MBITS_FULLDUPLEX   ((int32_t) 3)
+#define  DM916x_STATUS_100MBITS_HALFDUPLEX   ((int32_t) 4)
+#define  DM916x_STATUS_10MBITS_FULLDUPLEX    ((int32_t) 5)
+#define  DM916x_STATUS_10MBITS_HALFDUPLEX    ((int32_t) 6)
 
 typedef int32_t  (*dm916x_Init_Func) (void); 
 typedef int32_t  (*dm916x_DeInit_Func) (void);

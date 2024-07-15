@@ -28,7 +28,10 @@
 #include "netif/etharp.h"
 #include "lwip/ethip6.h"
 #include "ethernetif.h"
-#include "lan8742.h"
+/* USER CODE BEGIN Include for User BSP */
+#include "PHY_DM916x.h"
+#include "dbger.h"
+/* USER CODE END Include for User BSP */
 #include <string.h>
 
 /* Within 'USER CODE' section, code will be kept by default at each generation */
@@ -105,18 +108,20 @@ ETH_HandleTypeDef heth;
 ETH_TxPacketConfig TxConfig;
 
 /* Private function prototypes -----------------------------------------------*/
+/* USER CODE BEGIN Private function prototypes for User BSP */
 int32_t ETH_PHY_IO_Init(void);
 int32_t ETH_PHY_IO_DeInit (void);
 int32_t ETH_PHY_IO_ReadReg(uint32_t DevAddr, uint32_t RegAddr, uint32_t *pRegVal);
 int32_t ETH_PHY_IO_WriteReg(uint32_t DevAddr, uint32_t RegAddr, uint32_t RegVal);
 int32_t ETH_PHY_IO_GetTick(void);
 
-lan8742_Object_t LAN8742;
-lan8742_IOCtx_t  LAN8742_IOCtx = {ETH_PHY_IO_Init,
+dm916x_Object_t DM916x;
+dm916x_IOCtx_t  DM916x_IOCtx = {ETH_PHY_IO_Init,
                                   ETH_PHY_IO_DeInit,
                                   ETH_PHY_IO_WriteReg,
                                   ETH_PHY_IO_ReadReg,
                                   ETH_PHY_IO_GetTick};
+/* USER CODE END Private function prototypes for User BSP */
 
 /* USER CODE BEGIN 3 */
 
@@ -198,14 +203,10 @@ static void low_level_init(struct netif *netif)
     netif->flags |= NETIF_FLAG_BROADCAST;
   #endif /* LWIP_ARP */
 
-/* USER CODE BEGIN PHY_PRE_CONFIG */
-
-/* USER CODE END PHY_PRE_CONFIG */
-  /* Set PHY IO functions */
-  LAN8742_RegisterBusIO(&LAN8742, &LAN8742_IOCtx);
-
-  /* Initialize the LAN8742 ETH PHY */
-  LAN8742_Init(&LAN8742);
+/* USER CODE BEGIN low_level_init Code 1 for User BSP */
+	DM916x_RegisterBusIO(&DM916x, &DM916x_IOCtx);
+	DM916x_Init(&DM916x);
+/* USER CODE END low_level_init Code 1 for User BSP */
 
   if (hal_eth_init_status == HAL_OK)
   {
@@ -437,6 +438,7 @@ u32_t sys_now(void)
 
 /* USER CODE END 6 */
 
+/* USER CODE BEGIN PHI IO Functions for User BSP */
 /**
   * @brief  Initializes the ETH MSP.
   * @param  ethHandle: ETH handle
@@ -617,38 +619,38 @@ int32_t ETH_PHY_IO_GetTick(void)
   */
 void ethernet_link_check_state(struct netif *netif)
 {
-  ETH_MACConfigTypeDef MACConf = {0};
+	ETH_MACConfigTypeDef MACConf = {0};
   int32_t PHYLinkState = 0;
   uint32_t linkchanged = 0U, speed = 0U, duplex = 0U;
 
-  PHYLinkState = LAN8742_GetLinkState(&LAN8742);
+  PHYLinkState = DM916x_GetLinkState(&DM916x);
 
-  if(netif_is_link_up(netif) && (PHYLinkState <= LAN8742_STATUS_LINK_DOWN))
+  if(netif_is_link_up(netif) && (PHYLinkState <= DM916x_STATUS_LINK_DOWN))
   {
     HAL_ETH_Stop(&heth);
     netif_set_down(netif);
     netif_set_link_down(netif);
   }
-  else if(!netif_is_link_up(netif) && (PHYLinkState > LAN8742_STATUS_LINK_DOWN))
+  else if(!netif_is_link_up(netif) && (PHYLinkState > DM916x_STATUS_LINK_DOWN))
   {
     switch (PHYLinkState)
     {
-    case LAN8742_STATUS_100MBITS_FULLDUPLEX:
+    case DM916x_STATUS_100MBITS_FULLDUPLEX:
       duplex = ETH_FULLDUPLEX_MODE;
       speed = ETH_SPEED_100M;
       linkchanged = 1;
       break;
-    case LAN8742_STATUS_100MBITS_HALFDUPLEX:
+    case DM916x_STATUS_100MBITS_HALFDUPLEX:
       duplex = ETH_HALFDUPLEX_MODE;
       speed = ETH_SPEED_100M;
       linkchanged = 1;
       break;
-    case LAN8742_STATUS_10MBITS_FULLDUPLEX:
+    case DM916x_STATUS_10MBITS_FULLDUPLEX:
       duplex = ETH_FULLDUPLEX_MODE;
       speed = ETH_SPEED_10M;
       linkchanged = 1;
       break;
-    case LAN8742_STATUS_10MBITS_HALFDUPLEX:
+    case DM916x_STATUS_10MBITS_HALFDUPLEX:
       duplex = ETH_HALFDUPLEX_MODE;
       speed = ETH_SPEED_10M;
       linkchanged = 1;
@@ -667,10 +669,33 @@ void ethernet_link_check_state(struct netif *netif)
       HAL_ETH_Start(&heth);
       netif_set_up(netif);
       netif_set_link_up(netif);
+			
+			extern struct netif gnetif;
+			#if LWIP_DHCP
+				if(ip4_addr_isany_val(*netif_ip4_addr(&gnetif))) {
+					LOG_DBG("DHCP enabled, check the IP in route\n");
+				} else {
+					LOG_DBG(" IP : %s\n", ip4addr_ntoa(netif_ip4_addr(&gnetif)));
+					LOG_DBG("Mask: %s\n", ip4addr_ntoa(netif_ip4_netmask(&gnetif)));
+					LOG_DBG(" GW : %s\n", ip4addr_ntoa(netif_ip4_gw(&gnetif)));
+				}
+			#else
+				LOG_DBG(" IP : %s\n", ip4addr_ntoa(netif_ip4_addr(&gnetif)));
+				LOG_DBG("Mask: %s\n", ip4addr_ntoa(netif_ip4_netmask(&gnetif)));
+				LOG_DBG(" GW : %s\n", ip4addr_ntoa(netif_ip4_gw(&gnetif)));
+			#endif
     }
   }
-
 }
+/* USER CODE END PHI IO Functions for User BSP */
+
+/**
+  * @brief  Check the ETH link state then update ETH driver and netif link accordingly.
+  * @retval None
+  */
+//void ethernet_link_check_state(struct netif *netif)
+//{
+//}
 
 void HAL_ETH_RxAllocateCallback(uint8_t **buff)
 {
