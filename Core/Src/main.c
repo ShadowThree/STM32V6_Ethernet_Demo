@@ -25,6 +25,7 @@
 #include "gpio.h"
 #include "usart.h"
 #include "dbger.h"
+#include "udp.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -51,12 +52,15 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+void udpClient_connect(void);
+static void udpClient_send(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+volatile uint8_t is_udp_connect = 0;
+static uint32_t counter = 0;
+static struct udp_pcb *upcb;
 /* USER CODE END 0 */
 
 /**
@@ -91,14 +95,22 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_LWIP_Init();
   /* USER CODE BEGIN 2 */
-
+	//udpClient_connect();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-			MX_LWIP_Process();
+		MX_LWIP_Process();
+		
+		if(is_udp_connect) {
+			static uint32_t last_tick = 0;
+			while(HAL_GetTick() - last_tick > 2000) {
+				last_tick = HAL_GetTick();
+				udpClient_send();
+			}
+		}
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -152,7 +164,93 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+static void udpClient_send(void)
+{
+  struct pbuf *txBuf;
+	err_t err = ERR_OK;
+  char data[100];
 
+  int len = sprintf(data, "sending UDP client message %d", counter);
+	LOG_DBG("udp client send \"%s\" to server\n", data);
+
+  /* allocate pbuf from pool*/
+  txBuf = pbuf_alloc(PBUF_TRANSPORT, len, PBUF_RAM);
+
+  if (txBuf != NULL)
+  {
+    /* copy data to pbuf */
+    err = pbuf_take(txBuf, data, len);
+		if(err != ERR_OK) {
+			LOG_ERR("pbuf_take() err[%d]\n", err);
+		} else {
+			/* send udp data */
+			err = udp_send(upcb, txBuf);
+			if(err != ERR_OK) {
+				LOG_ERR("udp_send() err[%d]\n", err);
+			}
+		}
+    /* free pbuf */
+    pbuf_free(txBuf);
+  }
+}
+
+void udp_receive_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
+{
+	/* Copy the data from the pbuf */
+	//strncpy (buffer, (char *)p->payload, p->len);
+	((char *)p->payload)[p->len] = 0;
+	LOG_DBG("recv from [%s:%d](Len:%d): %s\n", ipaddr_ntoa(addr), port, p->len, (char*)p->payload);
+	/*increment message count */
+	counter++;
+	/* Free receive pbuf */
+	pbuf_free(p);
+}
+
+void udpClient_connect(void)
+{
+	err_t err;
+	extern struct netif gnetif;
+
+	/* 1. Create a new UDP control block  */
+	upcb = udp_new();
+	if(upcb == NULL) {
+		LOG_ERR("udp_new err\n");
+		return;
+	}
+	/* Bind the block to module's IP and port */
+	ip_addr_t myIPaddr;
+	IP_ADDR4(&myIPaddr, 192, 168, 0, 100);
+	err = udp_bind(upcb, &myIPaddr, 8);
+	//err = udp_bind(upcb, &gnetif.ip_addr, 8);
+	if(err != ERR_OK) {
+		LOG_ERR("udp client udp_bind() err[%d]\n", err);
+	} else {
+		LOG_DBG("udp client bind %s:%d\n", ip4addr_ntoa(&myIPaddr), 8);
+	}
+
+	/* configure destination IP address and port */
+	ip_addr_t DestIPaddr;
+	IP_ADDR4(&DestIPaddr, 192, 168, 0, 102);
+	err = udp_connect(upcb, &DestIPaddr, 9);
+	if (err == ERR_OK) {
+		LOG_DBG("udp client conn with server[192.168.0.102:9]\n");
+		/* 2. Send message to server */
+		//udpClient_send ();
+		/* 3. Set a receive callback for the upcb */
+		udp_recv(upcb, udp_receive_callback, NULL);
+		is_udp_connect = 1;
+	} else {
+		LOG_ERR("udp client conn with server[192.168.0.102:9] err[%d]\n", err);
+	}
+}
+
+void udpClient_disconnect(void)
+{
+	if(upcb) {
+		udp_disconnect(upcb);
+		udp_remove(upcb);
+	}
+}
 /* USER CODE END 4 */
 
 /**

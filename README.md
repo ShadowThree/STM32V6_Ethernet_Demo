@@ -1,3 +1,9 @@
+## UDP Client
+1. MCU UDP_client(192.168.0.100:8) --> 手机 UDP_server(192.168.0.102:9)；
+2. 目前只验证了`UDP`客户端发送是正常的，`UDP`客户端接收回调功能还没验证；
+3. [`UDP通信相关`](https://blog.csdn.net/c2unix/article/details/106637887)；
+4. `IOS UDP/TCP`调试工具推荐：`UDP/TCP/REST Network Utility`
+
 ## 注意
 1. 在下面的`工程创建过程-第3步`中，选择了`LAN8742`作为`PHY`芯片驱动代码模板，熟悉后完全可以不选，直接在生成的代码中编辑`ethernetif.c`文件即可(也不需要复制重命名了)；
 2. 在`cubeMx`的`LWIP`配置里面开启`Debug`后好像并没有日志输出，需要手动在工程代码的`lwipopts.h`中加上如下代码（按需使能）：

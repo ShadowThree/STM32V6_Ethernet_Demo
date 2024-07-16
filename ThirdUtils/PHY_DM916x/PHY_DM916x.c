@@ -221,6 +221,10 @@ int32_t DM916x_GetLinkState(dm916x_Object_t *pObj)
 			PHY_DBG("DM916x Link Down\n");
 			is_dm916x_link_up = DM916x_LINK_STAT_DOWN;
 		}
+		extern volatile uint8_t is_udp_connect;
+		extern void udpClient_disconnect(void);
+		is_udp_connect = 0;
+		udpClient_disconnect();
 		return DM916x_STATUS_LINK_DOWN;
 	} else {
 		if(is_dm916x_link_up != DM916x_LINK_STAT_UP) {

@@ -684,6 +684,9 @@ void ethernet_link_check_state(struct netif *netif)
 				LOG_DBG("Mask: %s\n", ip4addr_ntoa(netif_ip4_netmask(&gnetif)));
 				LOG_DBG(" GW : %s\n", ip4addr_ntoa(netif_ip4_gw(&gnetif)));
 			#endif
+			
+			extern void udpClient_connect(void);
+			udpClient_connect();
     }
   }
 }
